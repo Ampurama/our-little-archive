@@ -23,7 +23,7 @@ export const STARTER_MEMORIES = [
 
 { id: "m3", title: "Di perjalanan", place: "Lokasi belum dicatat", date: "16 Agustus 2026", sortDate: "2026-08-16", note: "pergi ke mana sebenarnya nda terlalu penting, yang penting jalannya sama kamu. cieee, gombal sedikit.", image: "/image/16agustus.jpeg" },
 
-{ id: "m2", title: "Awak bulan kita", place: "Lokasi belum dicatat", date: "2 Agustus 2026", sortDate: "2026-08-02", note: "awal bulan sama kamu, semoga bukan cuma awal bulan yang sama-sama terus, tapi sampai tua nanti juga.", image: "/image/2agustus(1).jpg" },
+{ id: "m2", title: "Awal bulan kita", place: "Lokasi belum dicatat", date: "2 Agustus 2026", sortDate: "2026-08-02", note: "awal bulan sama kamu, semoga bukan cuma awal bulan yang sama-sama terus, tapi sampai tua nanti juga.", image: "/image/2agustus(1).jpg" },
 
 { id: "m1", title: "Awal bulan kita", place: "Lokasi belum dicatat", date: "2 Agustus 2026", sortDate: "2026-08-02", note: "foto awal bulan kitaa. nda nyangka sekarang jadi orang yang paling sering saya rindukan.", image: "/image/2agustus.jpeg" },
 

@@ -12,9 +12,11 @@ import DatePlanner from "./DatePlanner";
 import CoupleQuiz from "./CoupleQuiz";
 import MemoryMap from "./MemoryMap";
 import CountdownExperience from "./CountdownExperience";
+import SupabaseAccess from "./SupabaseAccess";
 import { DAILY_MESSAGES, STARTER_MEMORIES, STARTER_PLANS, STARTER_SPECIAL, getDailyMessage } from "../data";
 import useStoredState from "../hooks/useStoredState";
 import useAmbientSound from "../hooks/useAmbientSound";
+import { supabase, supabaseConfigured } from "../lib/supabaseClient";
 
 const STARTER_MEMORIES_SIGNATURE = JSON.stringify(STARTER_MEMORIES);
 const MEMORY_STORAGE_KEYS = [
@@ -32,6 +34,10 @@ export default function MainApp() {
   const [showPhotoJourney, setShowPhotoJourney] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
   const [activeView, setActiveView] = useState("home");
+  const [authReady, setAuthReady] = useState(!supabaseConfigured);
+  const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [isCoupleMember, setIsCoupleMember] = useState(false);
+  const [membershipError, setMembershipError] = useState(false);
   const [plans, setPlans] = useStoredState("ruang-kita-plans", STARTER_PLANS);
   const [memories, setMemories] = useStoredState("ruang-kita-memories-v5", STARTER_MEMORIES);
   const [special, setSpecial] = useStoredState("ruang-kita-special", STARTER_SPECIAL);
@@ -41,6 +47,51 @@ export default function MainApp() {
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!supabaseConfigured) return undefined;
+
+    let active = true;
+
+    async function resolveSession(session) {
+      if (!active) return;
+      const user = session?.user ?? null;
+      setAuthenticatedUser(user);
+
+      if (!user) {
+        setIsCoupleMember(false);
+        setMembershipError(false);
+        setAuthReady(true);
+        return;
+      }
+
+      setAuthReady(false);
+      const { data, error } = await supabase
+        .from("couple_members")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!active) return;
+      setIsCoupleMember(Boolean(data));
+      setMembershipError(Boolean(error));
+      setAuthReady(true);
+    }
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) console.warn("Supabase session could not be read:", error.message);
+      resolveSession(data?.session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      window.setTimeout(() => resolveSession(session), 0);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -95,6 +146,11 @@ export default function MainApp() {
     minutes: now ? Math.floor((timeLeft % 3600000) / 60000) : null,
   };
   const dailyMessage = DAILY_MESSAGES.length ? getDailyMessage(now) : "";
+
+  if (supabaseConfigured && !authReady) return <main className="sync-loading">Membuka ruang kita...</main>;
+  if (supabaseConfigured && (!authenticatedUser || !isCoupleMember)) {
+    return <SupabaseAccess user={authenticatedUser} isMember={isCoupleMember} membershipError={membershipError} onSignOut={() => supabase.auth.signOut()} />;
+  }
 
   if (!showTogetherCounter) return <IntroScreen onEnter={() => setShowTogetherCounter(true)} onUserGesture={ambientSound.resume} />;
   if (!showThankYouVideo) return <TogetherCounter onContinue={() => { ambientSound.resume(); setShowThankYouVideo(true); }} />;
