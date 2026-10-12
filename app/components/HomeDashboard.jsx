@@ -12,7 +12,7 @@ const SHORTCUTS = [
   { id: "countdown", title: "Hitung mundur", detail: "Hari spesial berikutnya", icon: Timer },
 ];
 
-export default function HomeDashboard({ memories, onNavigate }) {
+export default function HomeDashboard({ memories, onNavigate, readOnly = false }) {
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [pointerTilt, setPointerTilt] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -106,7 +106,7 @@ export default function HomeDashboard({ memories, onNavigate }) {
         </div>
       </section>}
 
-      <RelationshipClock onOpenCountdown={() => onNavigate("countdown")} />
+      {!readOnly && <RelationshipClock onOpenCountdown={() => onNavigate("countdown")} />}
 
       <section className="archive-body">
         <div className="archive-timeline-panel">
@@ -120,18 +120,18 @@ export default function HomeDashboard({ memories, onNavigate }) {
         </div>
 
         <div className="archive-memory-panel">
-          <header className="archive-section-heading"><div><p>FOTO-FOTO LAINNYA</p><h2>Disimpan <em>baik-baik.</em></h2></div><button onClick={() => onNavigate("map")} aria-label="Lihat peta kenangan"><MapPin size={17} /></button></header>
+          <header className="archive-section-heading"><div><p>FOTO-FOTO LAINNYA</p><h2>Disimpan <em>baik-baik.</em></h2></div>{!readOnly && <button onClick={() => onNavigate("map")} aria-label="Lihat peta kenangan"><MapPin size={17} /></button>}</header>
           <div className="archive-memory-grid">{supportingMemories.map((memory, index) => <button className="archive-memory-photo" key={memory.id} onClick={() => setSelectedMemory(memory)} aria-label={`Buka cerita ${memory.title}`}>
             <img src={memory.image} alt={memory.title} /><span>{String(index + stackMemories.length + 1).padStart(2, "0")}</span>
           </button>)}</div>
         </div>
       </section>
 
-      <nav className="archive-shortcuts" aria-label="Bagian ruang kita">
+      {!readOnly && <nav className="archive-shortcuts" aria-label="Bagian ruang kita">
         {SHORTCUTS.map(({ id, title, detail, icon: Icon }) => (
           <button key={id} onClick={() => onNavigate(id)}><Icon size={17} strokeWidth={1.7} /><span><strong>{title}</strong><small>{detail}</small></span><ArrowUpRight size={15} /></button>
         ))}
-      </nav>
+      </nav>}
 
       {portalReady && selectedMemory && createPortal(<div className="story-backdrop" role="presentation" onClick={() => setSelectedMemory(null)} onKeyDown={(event) => { if (event.key === "Escape") setSelectedMemory(null); }}>
         <article className="story-modal" role="dialog" aria-modal="true" aria-labelledby="story-title" onClick={(event) => event.stopPropagation()}>

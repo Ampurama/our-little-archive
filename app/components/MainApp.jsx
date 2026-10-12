@@ -6,6 +6,7 @@ import IntroScreen from "./IntroScreen";
 import TogetherCounter from "./TogetherCounter";
 import ThankYouVideo from "./ThankYouVideo";
 import PhotoJourney from "./PhotoJourney";
+import AinunIntro from "./AinunIntro";
 import HomeDashboard from "./HomeDashboard";
 import LetterExperience from "./LetterExperience";
 import DatePlanner from "./DatePlanner";
@@ -37,6 +38,8 @@ export default function MainApp() {
   const [authReady, setAuthReady] = useState(!supabaseConfigured);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const [isCoupleMember, setIsCoupleMember] = useState(false);
+  const [memberAccessLevel, setMemberAccessLevel] = useState(null);
+  const [ainunIntroSeen, setAinunIntroSeen] = useState(false);
   const [membershipError, setMembershipError] = useState(false);
   const [plans, setPlans] = useStoredState("ruang-kita-plans", STARTER_PLANS);
   const [memories, setMemories] = useStoredState("ruang-kita-memories-v5", STARTER_MEMORIES);
@@ -61,6 +64,7 @@ export default function MainApp() {
 
       if (!user) {
         setIsCoupleMember(false);
+        setMemberAccessLevel(null);
         setMembershipError(false);
         setAuthReady(true);
         return;
@@ -69,12 +73,13 @@ export default function MainApp() {
       setAuthReady(false);
       const { data, error } = await supabase
         .from("couple_members")
-        .select("user_id")
+        .select("user_id, access_level")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (!active) return;
       setIsCoupleMember(Boolean(data));
+      setMemberAccessLevel(data?.access_level ?? null);
       setMembershipError(Boolean(error));
       setAuthReady(true);
     }
@@ -146,10 +151,15 @@ export default function MainApp() {
     minutes: now ? Math.floor((timeLeft % 3600000) / 60000) : null,
   };
   const dailyMessage = DAILY_MESSAGES.length ? getDailyMessage(now) : "";
+  const isAinun = authenticatedUser?.email?.toLowerCase() === "einundhiyaa10@gmail.com";
 
   if (supabaseConfigured && !authReady) return <main className="sync-loading">Membuka ruang kita...</main>;
   if (supabaseConfigured && (!authenticatedUser || !isCoupleMember)) {
     return <SupabaseAccess user={authenticatedUser} isMember={isCoupleMember} membershipError={membershipError} onSignOut={() => supabase.auth.signOut()} />;
+  }
+  if (supabaseConfigured && memberAccessLevel === "viewer") {
+    if (isAinun && !ainunIntroSeen) return <AinunIntro onContinue={() => setAinunIntroSeen(true)} />;
+    return <HomeDashboard memories={memories} readOnly />;
   }
 
   if (!showTogetherCounter) return <IntroScreen onEnter={() => setShowTogetherCounter(true)} onUserGesture={ambientSound.resume} />;
