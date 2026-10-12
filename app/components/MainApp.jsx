@@ -14,11 +14,10 @@ import DatePlanner from "./DatePlanner";
 import CoupleQuiz from "./CoupleQuiz";
 import MemoryMap from "./MemoryMap";
 import CountdownExperience from "./CountdownExperience";
-import SupabaseAccess from "./SupabaseAccess";
+import NameAccess from "./NameAccess";
 import { DAILY_MESSAGES, STARTER_MEMORIES, STARTER_PLANS, STARTER_SPECIAL, getDailyMessage } from "../data";
 import useStoredState from "../hooks/useStoredState";
 import useAmbientSound from "../hooks/useAmbientSound";
-import { supabase, supabaseConfigured } from "../lib/supabaseClient";
 
 const STARTER_MEMORIES_SIGNATURE = JSON.stringify(STARTER_MEMORIES);
 const MEMORY_STORAGE_KEYS = [
@@ -36,10 +35,8 @@ export default function MainApp() {
   const [showPhotoJourney, setShowPhotoJourney] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
   const [activeView, setActiveView] = useState("home");
-  const [authReady, setAuthReady] = useState(!supabaseConfigured);
-  const [authenticatedUser, setAuthenticatedUser] = useState(null);
-  const [isCoupleMember, setIsCoupleMember] = useState(false);
-  const [memberAccessLevel, setMemberAccessLevel] = useState(null);
+  const [selectedName, setSelectedName] = useState("");
+  const [identityReady, setIdentityReady] = useState(false);
   const [ainunIntroSeen, setAinunIntroSeen] = useState(false);
   const [previewAinunIntro, setPreviewAinunIntro] = useState(false);
   const [previewAinunSession, setPreviewAinunSession] = useState(false);
@@ -57,57 +54,18 @@ export default function MainApp() {
   }, []);
 
   useEffect(() => {
+    try {
+      const savedName = window.localStorage.getItem("ruang-kita-name");
+      if (["Rayhan", "Tari", "Einun"].includes(savedName)) setSelectedName(savedName);
+    } catch {}
+    setIdentityReady(true);
+  }, []);
+
+  useEffect(() => {
     const shouldPreviewAinun = new URLSearchParams(window.location.search).get("preview") === "ainun";
     setPreviewAinunIntro(shouldPreviewAinun);
     setPreviewAinunSession(false);
     setPreviewChecked(true);
-  }, []);
-
-  useEffect(() => {
-    if (!supabaseConfigured) return undefined;
-
-    let active = true;
-
-    async function resolveSession(session) {
-      if (!active) return;
-      const user = session?.user ?? null;
-      setAuthenticatedUser(user);
-
-      if (!user) {
-        setIsCoupleMember(false);
-        setMemberAccessLevel(null);
-        setMembershipError(false);
-        setAuthReady(true);
-        return;
-      }
-
-      setAuthReady(false);
-      const { data, error } = await supabase
-        .from("couple_members")
-        .select("user_id, access_level")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!active) return;
-      setIsCoupleMember(Boolean(data));
-      setMemberAccessLevel(data?.access_level ?? null);
-      setMembershipError(Boolean(error));
-      setAuthReady(true);
-    }
-
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error) console.warn("Supabase session could not be read:", error.message);
-      resolveSession(data?.session);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      window.setTimeout(() => resolveSession(session), 0);
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
   }, []);
 
   useEffect(() => {
@@ -162,11 +120,31 @@ export default function MainApp() {
     minutes: now ? Math.floor((timeLeft % 3600000) / 60000) : null,
   };
   const dailyMessage = DAILY_MESSAGES.length ? getDailyMessage(now) : "";
-  const isAinun = authenticatedUser?.email?.toLowerCase() === "einundhiyaa10@gmail.com";
-  const isViewerMode = (supabaseConfigured && memberAccessLevel === "viewer") || previewAinunSession;
+  const isViewerMode = selectedName === "Einun" || previewAinunSession;
   const viewerNavItems = [{ id: "home", label: "Beranda", icon: House }];
 
-  if (!previewChecked) return null;
+  function chooseName(name) {
+    setSelectedName(name);
+    try {
+      window.localStorage.setItem("ruang-kita-name", name);
+    } catch {}
+  }
+
+  function changeName() {
+    setSelectedName("");
+    setPreviewAinunSession(false);
+    setAinunIntroSeen(false);
+    setShowTogetherCounter(false);
+    setShowThankYouVideo(false);
+    setShowPhotoJourney(false);
+    setHasEntered(false);
+    setActiveView("home");
+    try {
+      window.localStorage.removeItem("ruang-kita-name");
+    } catch {}
+  }
+
+  if (!previewChecked || !identityReady) return null;
 
   if (previewAinunIntro) {
     return <AinunIntro onContinue={() => {
@@ -177,13 +155,8 @@ export default function MainApp() {
       }
     }} />;
   }
-  if (supabaseConfigured && !authReady) return <main className="sync-loading">Membuka ruang kita...</main>;
-  if (supabaseConfigured && (!authenticatedUser || !isCoupleMember) && !previewAinunSession) {
-    return <SupabaseAccess user={authenticatedUser} isMember={isCoupleMember} membershipError={membershipError} onSignOut={() => supabase.auth.signOut()} />;
-  }
-  if (supabaseConfigured && memberAccessLevel === "viewer") {
-    if (isAinun && !ainunIntroSeen) return <AinunIntro onContinue={() => setAinunIntroSeen(true)} />;
-  }
+  if (!selectedName && !previewAinunSession) return <NameAccess onChooseName={chooseName} />;
+  if (selectedName === "Einun" && !ainunIntroSeen) return <AinunIntro onContinue={() => setAinunIntroSeen(true)} />;
 
   if (!showTogetherCounter) return <IntroScreen onEnter={() => setShowTogetherCounter(true)} onUserGesture={ambientSound.resume} />;
   if (!showThankYouVideo) return <TogetherCounter onContinue={() => { ambientSound.resume(); setShowThankYouVideo(true); }} />;
@@ -212,8 +185,8 @@ export default function MainApp() {
   }
 
   if (isViewerMode) {
-    return <AppShell activeView="home" onNavigate={(next) => next === "home" && setActiveView("home")} specialTitle={special.title} navItems={viewerNavItems}>{<HomeDashboard memories={memories} readOnly />}</AppShell>;
+    return <AppShell activeView="home" onNavigate={(next) => next === "home" && setActiveView("home")} onChangeIdentity={changeName} specialTitle={special.title} navItems={viewerNavItems}>{<HomeDashboard memories={memories} readOnly />}</AppShell>;
   }
 
-  return <AppShell activeView={activeView} onNavigate={setActiveView} specialTitle={special.title}>{view}</AppShell>;
+  return <AppShell activeView={activeView} onNavigate={setActiveView} onChangeIdentity={changeName} specialTitle={special.title}>{view}</AppShell>;
 }

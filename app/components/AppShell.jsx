@@ -1,9 +1,9 @@
 "use client";
 
-import { Aperture } from "lucide-react";
+import { Aperture, UserRoundPen } from "lucide-react";
 import { NAV_ITEMS } from "../data";
 
-export default function AppShell({ activeView, onNavigate, specialTitle, children, navItems = NAV_ITEMS }) {
+export default function AppShell({ activeView, onNavigate, onChangeIdentity, specialTitle, children, navItems = NAV_ITEMS }) {
   const activeItem = navItems.find((item) => item.id === activeView);
 
   return (
@@ -20,7 +20,7 @@ export default function AppShell({ activeView, onNavigate, specialTitle, childre
             </button>
           ))}
         </nav>
-        <div className="app-topbar-index"><span>INDEX / 01</span><span>2026</span></div>
+        <div className="app-topbar-index"><span>INDEX / 01</span><span>2026</span><button className="identity-switch" type="button" onClick={onChangeIdentity} aria-label="Ganti nama" title="Ganti nama"><UserRoundPen size={16} /></button></div>
       </header>
       <main className="view-content" key={activeView}>{children}</main>
       <footer className="app-footer"><span>RUANG KITA <i className="footer-dot" /> ARSIP PRIBADI</span><span>{activeItem?.label.toUpperCase()} / 01</span></footer>
