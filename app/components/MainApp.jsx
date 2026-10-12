@@ -1,5 +1,6 @@
 "use client";
 
+import { House } from "lucide-react";
 import { useEffect, useState } from "react";
 import AppShell from "./AppShell";
 import IntroScreen from "./IntroScreen";
@@ -40,6 +41,9 @@ export default function MainApp() {
   const [isCoupleMember, setIsCoupleMember] = useState(false);
   const [memberAccessLevel, setMemberAccessLevel] = useState(null);
   const [ainunIntroSeen, setAinunIntroSeen] = useState(false);
+  const [previewAinunIntro, setPreviewAinunIntro] = useState(false);
+  const [previewAinunSession, setPreviewAinunSession] = useState(false);
+  const [previewChecked, setPreviewChecked] = useState(false);
   const [membershipError, setMembershipError] = useState(false);
   const [plans, setPlans] = useStoredState("ruang-kita-plans", STARTER_PLANS);
   const [memories, setMemories] = useStoredState("ruang-kita-memories-v5", STARTER_MEMORIES);
@@ -50,6 +54,13 @@ export default function MainApp() {
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const shouldPreviewAinun = new URLSearchParams(window.location.search).get("preview") === "ainun";
+    setPreviewAinunIntro(shouldPreviewAinun);
+    setPreviewAinunSession(false);
+    setPreviewChecked(true);
   }, []);
 
   useEffect(() => {
@@ -152,14 +163,26 @@ export default function MainApp() {
   };
   const dailyMessage = DAILY_MESSAGES.length ? getDailyMessage(now) : "";
   const isAinun = authenticatedUser?.email?.toLowerCase() === "einundhiyaa10@gmail.com";
+  const isViewerMode = (supabaseConfigured && memberAccessLevel === "viewer") || previewAinunSession;
+  const viewerNavItems = [{ id: "home", label: "Beranda", icon: House }];
 
+  if (!previewChecked) return null;
+
+  if (previewAinunIntro) {
+    return <AinunIntro onContinue={() => {
+      setPreviewAinunIntro(false);
+      setPreviewAinunSession(true);
+      if (window.history.replaceState) {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }} />;
+  }
   if (supabaseConfigured && !authReady) return <main className="sync-loading">Membuka ruang kita...</main>;
-  if (supabaseConfigured && (!authenticatedUser || !isCoupleMember)) {
+  if (supabaseConfigured && (!authenticatedUser || !isCoupleMember) && !previewAinunSession) {
     return <SupabaseAccess user={authenticatedUser} isMember={isCoupleMember} membershipError={membershipError} onSignOut={() => supabase.auth.signOut()} />;
   }
   if (supabaseConfigured && memberAccessLevel === "viewer") {
     if (isAinun && !ainunIntroSeen) return <AinunIntro onContinue={() => setAinunIntroSeen(true)} />;
-    return <HomeDashboard memories={memories} readOnly />;
   }
 
   if (!showTogetherCounter) return <IntroScreen onEnter={() => setShowTogetherCounter(true)} onUserGesture={ambientSound.resume} />;
@@ -186,6 +209,10 @@ export default function MainApp() {
       break;
     default:
       view = <HomeDashboard memories={memories} onNavigate={setActiveView} />;
+  }
+
+  if (isViewerMode) {
+    return <AppShell activeView="home" onNavigate={(next) => next === "home" && setActiveView("home")} specialTitle={special.title} navItems={viewerNavItems}>{<HomeDashboard memories={memories} readOnly />}</AppShell>;
   }
 
   return <AppShell activeView={activeView} onNavigate={setActiveView} specialTitle={special.title}>{view}</AppShell>;

@@ -1,10 +1,10 @@
 "use client";
 
-import { Aperture, ArrowUpRight } from "lucide-react";
+import { Aperture } from "lucide-react";
 import { NAV_ITEMS } from "../data";
 
-export default function AppShell({ activeView, onNavigate, specialTitle, children }) {
-  const activeItem = NAV_ITEMS.find((item) => item.id === activeView);
+export default function AppShell({ activeView, onNavigate, specialTitle, children, navItems = NAV_ITEMS }) {
+  const activeItem = navItems.find((item) => item.id === activeView);
 
   return (
     <div className="app-shell">
@@ -14,7 +14,7 @@ export default function AppShell({ activeView, onNavigate, specialTitle, childre
           <span>ruang<span className="brand-light">kita</span><small>PERSONAL PHOTO LOG</small></span>
         </button>
         <nav className="main-nav" aria-label="Menu utama">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          {navItems.map(({ id, label, icon: Icon }) => (
             <button key={id} className={`nav-item ${activeView === id ? "selected" : ""}`} onClick={() => onNavigate(id)} aria-current={activeView === id ? "page" : undefined}>
               <Icon size={18} strokeWidth={1.8} /><span>{label}</span>{activeView === id && <span className="nav-marker" />}
             </button>

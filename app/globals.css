@@ -154,6 +154,21 @@ h1, h2, p { overflow-wrap: anywhere; }
 .archive-shortcuts strong { font: 500 15px/1.1 var(--serif); }
 .archive-shortcuts small { overflow: hidden; color: var(--gallery-muted); font: 8px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
 .archive-shortcuts > button > svg:last-child { flex: none; margin-left: auto; color: #a98d95; }
+.ainun-intro { min-height: 100vh; min-height: 100svh; position: relative; isolation: isolate; display: flex; align-items: center; overflow: hidden; padding: 0 7%; background: #482b37; color: #fffaf9; }
+.ainun-intro-photo { position: absolute; z-index: -2; inset: 0 0 0 27%; overflow: hidden; animation: intro-image-in 1.1s ease both; }
+.ainun-intro-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 43%; filter: saturate(.88); animation: intro-photo-drift 24s ease-in-out infinite alternate; }
+.ainun-intro-shade { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #482b37 0%, #482b37 31%, rgb(72 43 55 / 89%) 43%, rgb(72 43 55 / 24%) 74%, rgb(72 43 55 / 5%) 100%), linear-gradient(0deg, rgb(42 22 32 / 55%), transparent 47%); }
+.ainun-intro-copy { width: min(610px, 58%); position: relative; z-index: 1; padding: 58px 0 78px; animation: intro-copy-in .7s .1s both; }
+.ainun-intro-kicker { display: flex; align-items: center; gap: 9px; margin: 0; color: #f0c0c6; font: 8px var(--mono); letter-spacing: .06em; }
+.ainun-intro-kicker svg { color: #edb8c0; }
+.ainun-intro-copy h1 { margin: 24px 0 14px; color: #fffaf9; font: 500 clamp(48px, 5.8vw, 78px)/.96 var(--serif); }
+.ainun-intro-copy h1 em { color: #f0c0c6; font-weight: 500; }
+.ainun-intro-copy > p:not(.ainun-intro-kicker) { max-width: 440px; margin: 0; color: #f2d9dc; font: 500 clamp(25px, 3vw, 36px)/1.1 'Caveat', cursive; }
+.ainun-intro-copy button { min-height: 48px; display: inline-flex; align-items: center; gap: 13px; margin-top: 29px; padding: 0 16px; border: 1px solid rgb(255 250 249 / 58%); background: rgb(72 43 55 / 32%); color: #fffaf9; font: 9px var(--mono); backdrop-filter: blur(10px); transition: color .2s, background .2s, transform .2s, gap .2s; }
+.ainun-intro-copy button:hover { gap: 18px; transform: translateY(-2px); border-color: #edb8c0; background: #edb8c0; color: #482b37; }
+.ainun-intro-signature { position: absolute; right: 7%; bottom: 25px; z-index: 1; color: rgb(255 250 249 / 76%); font: 8px var(--mono); letter-spacing: .04em; }
+@keyframes ainun-title-in { from { opacity: 0; transform: translateY(18px) rotateX(8deg); } to { opacity: 1; transform: translateY(0) rotateX(0); } }
+
 .photo-journey { width: 100%; height: 100vh; height: 100svh; min-height: 540px; position: relative; isolation: isolate; display: grid; place-items: center; overflow: hidden; overscroll-behavior: contain; touch-action: manipulation; background: #482b37; color: #fffaf9; cursor: pointer; user-select: none; outline: none; }
 .photo-journey:focus-visible { outline: 2px solid #edb8c0; outline-offset: -8px; }
 .photo-journey-backdrop { position: absolute; z-index: -2; inset: -4%; overflow: hidden; animation: journey-bg-in .8s ease both; }
@@ -183,6 +198,16 @@ h1, h2, p { overflow-wrap: anywhere; }
 @keyframes journey-note-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 760px) {
+  .ainun-intro { min-height: 100vh; min-height: 100svh; display: block; padding: 0 22px; }
+  .ainun-intro-photo { inset: 0; }
+  .ainun-intro-photo img { object-position: center 39%; }
+  .ainun-intro-shade { background: linear-gradient(180deg, rgb(72 43 55 / 17%) 0%, rgb(72 43 55 / 10%) 27%, rgb(54 30 43 / 55%) 48%, #482b37 100%); }
+  .ainun-intro-copy { width: 100%; position: absolute; right: 22px; bottom: max(76px, 10svh); left: 22px; padding: 0; }
+  .ainun-intro-kicker { font-size: 7px; }
+  .ainun-intro-copy h1 { margin: 17px 0 9px; font-size: clamp(43px, 11vw, 60px); }
+  .ainun-intro-copy > p:not(.ainun-intro-kicker) { font-size: 26px; }
+  .ainun-intro-copy button { min-height: 45px; margin-top: 20px; font-size: 8px; }
+  .ainun-intro-signature { right: 22px; bottom: 22px; font-size: 7px; }
   .photo-journey { height: 100vh; height: 100svh; min-height: 100svh; }
   .photo-journey-image-wrap { width: 100vw; height: 100svh; }
   .photo-journey-image-wrap.story-visible { transform: perspective(1000px) rotateX(1deg) rotateY(-1.5deg) translate3d(0, -3svh, -24px) scale(.94); }
